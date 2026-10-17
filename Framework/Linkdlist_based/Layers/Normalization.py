@@ -48,3 +48,5 @@ class BatchNorm_layer(Layer):
         scaling_factor = 1 /(B * np.sqrt(self.var + self.epsilon)) * self.gamma
         
         self.grad_x = scaling_factor * grad_diff
+        
+        return self.grad_x

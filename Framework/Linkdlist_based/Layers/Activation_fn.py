@@ -7,7 +7,7 @@ class Activation_fn(Layer):
         self.activation_type = activation_type
         self.x_in = None
         self.grad = None
-        
+                    
 
 class ReLU(Activation_fn):
     def __init__(self):
@@ -19,6 +19,7 @@ class ReLU(Activation_fn):
 
     def backward(self, grad_in: np.ndarray) -> np.ndarray:
         self.grad = np.where(self.x_in > 0, 1, 0) * grad_in
+        return self.grad
 
     
 class Sigmoid(Activation_fn):
@@ -32,6 +33,7 @@ class Sigmoid(Activation_fn):
     def backward(self, grad_in: np.ndarray) -> np.ndarray:
         sigma = 1 /(1 + np.exp(-self.x_in))
         self.grad = sigma(1 - sigma) * grad_in
+        return self.grad
 
 
 class Tanh(Activation_fn):
@@ -44,6 +46,7 @@ class Tanh(Activation_fn):
 
     def backward(self, grad_in: np.ndarray) -> np.ndarray:
         self.grad = (1 - np.square(np.tanh(self.x_in))) * grad_in
+        return self.grad
 
 
 class Softmax(Activation_fn):
@@ -66,6 +69,7 @@ class LeakyReLU(Activation_fn):
 
     def backward(self, grad_in: np.ndarray) -> np.ndarray:
         self.grad = np.where(self.x_in > 0, 1, self.alpha) * grad_in
+        return self.grad
     
 class ELU(Activation_fn):
     def __init__(self, alpha: float = 1.0):
@@ -78,6 +82,7 @@ class ELU(Activation_fn):
 
     def backward(self, grad_in: np.ndarray) -> np.ndarray:
         self.grad = np.where(self.x_in > 0, 1, self.alpha * np.exp(self.x_in)) * grad_in
+        return self.grad
     
 class Swish(Activation_fn):
     def __init__(self, beta: float = 1.0):
@@ -92,6 +97,7 @@ class Swish(Activation_fn):
         swish = self.forward(self.x_in)
         sigma = 1 / (1 + np.exp(-self.X_in))
         self.grad = self.beta * (swish + sigma(1 - swish)) * grad_in
+        return self.grad
 
 
 class SILU(Activation_fn):
@@ -107,6 +113,7 @@ class SILU(Activation_fn):
         swish = self.forward(self.x_in)
         sigma = 1 / (1 + np.exp(-self.X_in))
         self.grad = self.beta * (swish + sigma(1 - swish)) *grad_in
+        return self.grad
 
 
 class GELU(Activation_fn):
@@ -122,6 +129,7 @@ class GELU(Activation_fn):
         phi_x = np.tanh(np.sqrt(2 / np.pi) * (self.X_in + self.k * np.power(self.X_in, 3)))
         g_x = np.sqrt(2 / np.pi) * (1 + 3 * self.k * np.square(self.x_in))
 
-        self.grad = 0.5 * (1 + phi_x + self.x_in * (1 - np.square(phi_x)) * g_x)
+        self.grad = 0.5 * (1 + phi_x + self.x_in * (1 - np.square(phi_x)) * g_x) * grad_in
+        return self.grad
 
     
