@@ -2,7 +2,7 @@ import numpy as np
 from Framework.Linkdlist_based.Model import Layer
 
 class Dropout_layer(Layer):
-    def __init__(self, out_dim: int, threshold: float = 0.5, is_training: bool = False):
+    def __init__(self, threshold: float = 0.5, is_training: bool = False):
         super().__init__("Dropout")
         self.is_training = is_training
         self.p = threshold      # threshold - p
@@ -21,6 +21,7 @@ class Dropout_layer(Layer):
 
     def backward(self, grad_in: np.ndarray) -> np.ndarray:
         self.grad = (self.M / (1 - self.p)) * grad_in 
+        return self.grad
                 
 
 

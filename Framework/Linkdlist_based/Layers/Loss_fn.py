@@ -28,6 +28,7 @@ class MSE(Loss_fn):
     def backward(self, y: np.ndarray, y_hat: np.ndarray) -> np.ndarray:
         B = 1 / y.shape[0]          #batch_size B
         self.grad = (2 / B) * (y - y_hat)
+        return self.grad
 
 # For one-hot encoded labels
 # Valid for Multi-Label Classification, each class output is independent.
@@ -98,6 +99,7 @@ class SoftmaxFusedCrossEntropy(Loss_fn):
     def backward(self, y: np.ndarray, y_hat: np.ndarray) -> np.ndarray:
         B = 1 / y.shape[0]          #batch_size B
         self.grad = (1 / B) * (y_hat - y)
+        return self.grad
 
 # BCEWithLogitsLoss 
 # Loss = max(x, 0) - xy + log(1 + e^-|x|)  Obtained by substitution for numerical stability
@@ -108,10 +110,12 @@ class SigmoidFusedBCE(Loss_fn):
 
 
     def forward(self, y: np.ndarray, logits: np.ndarray) -> float:
-        self.prediction = y_hat
+        self.prediction = logits
         loss_per_sample = np.max(logits, 0, axis=-1, keepdims = True) - logits * y + np.log(1 + np.exp(-np.abs(logits)))
         return np.mean(loss_per_sample)
 
     def backward(self, y: np.ndarray, y_hat: np.ndarray) -> np.ndarray:
-        B = 1 / y.shape[0]          #batch_size B
+        B = 1 / y.shape[0]           #batch_size B
         self.grad = (1 / B) * (y_hat - y)
+        return self.grad
+
