@@ -19,18 +19,29 @@ class Optimizer:
 
     
     def step(self):
-        for param_name, param in self.model.parameters.items():
-            if (hasattr(self, "v") and hasattr(self, "m")):
-                param, self.v[param_name] , self.m[param_name] = self.update_param(self.v[param_name], 
-                                                                                   self.m[param_name], 
-                                                                                   param, 
-                                                                                   self.model.gradients[param_name])
-            elif (hasattr(self, "v")):
-                param, self.v[param_name] = self.update_param(self.v[param_name], 
-                                                              param, self.model.gradients[param_name])
+        
+        parameters = self.model.parameters
 
-            else:
-                param = self.update_param(param, self.model.gradients[param_name])
+        gradients = self.model.gradients
+
+        # 1. Condition for first & second moment-based optimizers (e.g., Adam, Nadam)
+        if (hasattr(self, "v") and hasattr(self, "m")):
+            for param_name in self.model.parameters:
+                parameters[param_name], self.v[param_name] , self.m[param_name] = self.update_param(self.v[param_name], 
+                                                                                                    self.m[param_name], 
+                                                                                                    parameters[param_name], 
+                                                                                                    gradients[param_name])
+        
+        # 2. Condition for first moment-based optimizers (e.g., RMSprop, Momentum, NAG)
+        elif (hasattr(self, "v")):
+            for param_name in self.model.parameters:
+                parameters[param_name], self.v[param_name] = self.update_param(self.v[param_name], 
+                                                                               parameters[param_name], 
+                                                                               gradients[param_name])
+
+        else:
+            for param_name in self.model.parameters:
+                parameters[param_name] = self.update_param(parameters[param_name], gradients[param_name])
 
         # Increment the iteration counter if all updates are successful,
         # else rollback
