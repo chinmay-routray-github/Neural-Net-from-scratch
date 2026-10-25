@@ -12,15 +12,33 @@ class Linear_layer(Layer):
         self.grad_w = None
         self.grad_b = None
         self.grad_x = None
-        self.params = [self.W, self.b]
+        self.has_learnable_param = True
+
+
+    @property
+    def parameters(self):
+        return {
+            "W" : self.W, 
+            "b" : self.b
+        }
+
+
+    @property
+    def gradients(self):
+        return { 
+            "W" : self.grad_w, 
+            "b" : self.grad_b 
+        }
         
 
     def forward(self, X_in: np.ndarray) -> np.ndarray:
         self.x_in = X_in
         return X_in @ self.W + self.b
+    
 
     def backward(self, grad_in: np.ndarray) -> np.ndarray:
         self.grad_w = np.dot(self.x_in.T, grad_in) 
         self.grad_b = np.mean(grad_in, axis=0, keepdims = True)
         self.grad_x = np.dot(grad_in, self.W.T)
+        return self.grad_x
 

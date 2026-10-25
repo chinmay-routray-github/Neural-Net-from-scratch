@@ -6,22 +6,29 @@ from Framework.Linkdlist_based.Layers import Linear_layer
 
 
 class Layer:
+
+    _id_counter = 0    # to ensure unique layer ids
+
     def __init__(self, layer_type: str = "Layer"):
         self.next = None
         self.prev = None
         self.layer_type = layer_type
-        rng = np.random.default_rng()
-        self.layer_id = rng.integers(0, 1e6)
+        self.has_learnable_param = True
+        # rng = np.random.default_rng()
+        Layer._id_counter += 1
+        self.layer_id = f"{layer_type}_{Layer._id_counter}"
 
-    def __call__(self, input_layer):
-        self.prev = input_layer
-        input_layer.next = self
+    def __call__(self, next_layer):
+        self.next = next_layer
+        next_layer.prev = self
 
 
 class Hidden_layer(Layer):
     def __init__(self, d_in: int, d_out: int,  dropout_threshold: int, activation_fn: str = "LeakyReLU", is_training: bool = True):
-        super().__init__("Hidden layer - Combo of layers")
-        
+        super().__init__("Hidden_layer")
+
+        self.has_learnable_param = True
+
         self.linear = Linear_layer(d_in, d_out)
 
         activation_map = {
@@ -43,7 +50,41 @@ class Hidden_layer(Layer):
         self.Dropout = Dropout_layer(dropout_threshold, is_training)
 
         # Arranging the layers
-        self.Dropout(self.BatchNorm(self.activation(self.linear)))
+        self.linear(self.activation(self.BatchNorm(self.Dropout)))
+
+
+    @property
+    def sub_layers(self):
+        
+        all_sub_layers = [self.linear, self.activation, self.BatchNorm, self.Dropout]
+        
+        return {
+            sub_layer.layer_id : sub_layer 
+            for sub_layer in all_sub_layers 
+            if sub_layer is None
+        } 
+
+
+    @property
+    def parameters(self):
+        hidden_layer_params = {}
+        for layer_id in self.sub_layers:
+            layer = self.sub_layers[layer_id]
+            if (hasattr(layer, "parameters") and layer.has_learnable_param):
+                for param_name, param in layer.parameters.items():
+                    hidden_layer_params[param_name] = param 
+        return hidden_layer_params
+
+
+    @property
+    def gradients(self):
+        hidden_layer_grads = {}
+        for layer_id in self.sub_layers:
+            layer = self.sub_layers[layer_id]
+            if (hasattr(layer, "gradients") and self.has_learnable_param):
+                for grad_name, grad in layer.gradients.items():
+                    hidden_layer_grads[grad_name] = grad
+        return hidden_layer_grads
 
 
     def forward(self, X_in: np.ndarray, is_training: bool = True):
@@ -72,12 +113,15 @@ class Hidden_layer(Layer):
 
 
 class Model:
+
+    _id_counter = 0
+
     def __init__(self, first_layer: Layer):
         self.head = first_layer
         self.tail = first_layer
         self.model_type = "FeedForward-NN"
         rng = np.random.default_rng()
-        self.model_id = rng.integers(0, 1e6)
+        self.model_id = f"{rng.integers(0, 1e6)}{Model._id_counter}"
         self.layer_sequence = {1 : first_layer}
 
     # To add individual layers sequnetially
@@ -87,9 +131,31 @@ class Model:
         next_layer.prev = self.tail
         self.tail = next_layer
 
-        self.layer_sequence[max(self.layer_sequence)] = next_layer
+        self.layer_sequence[max(self.layer_sequence) + 1] = next_layer
         
-    
+
+    @ property
+    def parameters(self):
+        for sequence, layer in self.layer_sequence.items():
+            if (hasattr(layer, "parameters") and layer.has_learnable_param):
+                return {
+                    f"{layer.layer_id}_{param_name}" : param 
+                    
+                    for param_name, param in layer.parameters.items()
+                }
+
+
+    @property
+    def gradients(self):
+        for sequence, layer in self.layer_sequence.items():
+            if (hasattr(layer, "gradients") and layer.has_learnable_param):
+                return {
+                    f"{layer.layer_id}_{grad_name}" : grad 
+                    
+                    for grad_name, grad in layer.gradients.items()
+                }
+
+
     # To add n number of hidden layers sequentially
     def add_HiddenLayers(self, n: int, d_in: int, d_out: int, dropout_threshold: float, activation_fn: str):
         for i in range(n):
