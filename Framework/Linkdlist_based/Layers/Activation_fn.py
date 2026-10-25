@@ -7,6 +7,21 @@ class Activation_fn(Layer):
         self.activation_type = activation_type
         self.x_in = None
         self.grad = None
+        self.has_learnable_param = False
+
+
+    @property
+    def parameters(self):
+        return { 
+            "x_cache" : self.x_in 
+        }
+
+
+    @property
+    def gradients(self):
+        return { 
+            "dx" : self.grad 
+        }
                     
 
 class ReLU(Activation_fn):

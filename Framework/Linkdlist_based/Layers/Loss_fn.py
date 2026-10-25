@@ -7,6 +7,21 @@ class Loss_fn(Layer):
         self.loss_type = loss_type
         self.grad = None
         self.prediction = None
+        self.has_learnable_param = False
+
+
+    @property
+    def parameters(self):
+        return {
+            "y_predict" : self.prediction
+        }
+
+    
+    @property
+    def gradients(self):
+        return { 
+            "dx" : self.grads
+        }
 
 
 class MAE(Loss_fn):
