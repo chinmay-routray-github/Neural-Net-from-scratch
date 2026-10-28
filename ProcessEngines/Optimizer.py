@@ -39,6 +39,7 @@ class Optimizer:
                                                                                parameters[param_name], 
                                                                                gradients[param_name])
 
+        # 3. Condition for SGD
         else:
             for param_name in self.model.parameters:
                 parameters[param_name] = self.update_param(parameters[param_name], gradients[param_name])
